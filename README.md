@@ -40,10 +40,11 @@ Check the start of the script. You can set vars. Currently, you can force to che
 Except for "root access", all files are check. If it's related to /home and if you're root, it will loop for all users.
 
 ## Root access
- - shadow file if we have a bash shell
+ - print inf if user have a shell in shadow file 
  - WPA password store in wpa_supplicant or NetworkManager
  - grub password
  - ldap password
+ - password in fstab
  - All other checks are done for root, and for 
 
 ## Files with credz
@@ -51,7 +52,8 @@ Except for "root access", all files are check. If it's related to /home and if y
  - mysql mycnf
  - pidgin (libpurple)
  - postgresql
- - mysql and rdesktop pass stored in .bash_history
+ - mysql and rdesktop pass stored in (z|ba)sh history
+ - presence of a --password in (z|ba)sh history
  - ssh keys (protected by pass, and unprotected)
  - keepassx databases (ability to tell if it's currently open)
 
@@ -67,44 +69,44 @@ Except for "root access", all files are check. If it's related to /home and if y
 I want to add databases, tomcat passwords, better .bash_history parsing, and any other file of interest which contains passwords and which can be accessed reliably. If you have any idea/improvement, share it.
 
 # FAQ
-##### You forgot to check this file or this directory
+### You forgot to check this file or this directory
 Make a pull request, send me an email, ping me on twitter, I'll add it
 
-##### Can you change something here or here in the script?
+### Can you change something here or here in the script?
 Make a pull request, send me an email, ping me on twitter, I'll add it
 
-##### Your tool fails to extract a password
+### Your tool fails to extract a password
 Make a pull request, send me an email, ping me on twitter, I'll add it (the more files, the better)
 
-##### I've found a bug!
+### I've found a bug!
 Make a pull request, send me an email, ping me on twitter, I'll add it
 
-##### I love you and I want to marry you
+### I love you and I want to marry you
 Make a pull request, send me an^W^W^W Wait, WHAT?
 
-##### Does it have a license?
+### Does it have a license?
 BeerWare. If you're happy to use it, ping me :)
 
-##### There is no configure or make?
+### There is no configure or make?
 Dude, this is pure bash
 
-##### Is it compatible with blockchain?
+### Is it compatible with blockchain?
 LMAO!! Nope.
 
-##### No really?
+### No really?
 This is in my roadmap, I'll code it in v42.193.254-patchlevelGoldEdition-EditorFinalCut. Reservation needed, ICO in 3 months, It'll cost only 25k$ for you.
 
-##### But this look like Lazagne which is a tool designed to extract password?
-Yes. and [Lazagne](https://github.com/AlessandroZ/LaZagne) is a really great tool. Use it with my blessings. And [pupy] (https://github.com/n1nj4sec/pupy/) too. I'm a happy user of both :)
+### But this look like Lazagne which is a tool designed to extract password?
+Yes. and [Lazagne](https://github.com/AlessandroZ/LaZagne) is a really great tool. Use it with my blessings. And [pupy](https://github.com/n1nj4sec/pupy/) too. I'm a happy user of both :)
 
-##### Does P=NP?
+### Does P=NP?
 I have a beautiful demonstration of this theorem, but it doesn't fit on ~~this margin~~. ~~this github~~. this internet. 
 
-##### This is not secure code
+### This is not secure code
 We are speaking of pwned system, so what? This is designed for pentesters, and they should know what they do.
 
-##### I've tested it and now, everybody have seen my password on the screen!
+### I've tested it and now, everybody have seen my password on the screen!
 Is your password hunter2?
 
 # Thanks
-thanks for @HexpressoCTF for inspirational IRC talk :)
+thanks for [Hexpresso](https://twitter.com/HexpressoCTF) for inspirational IRC talk :)

