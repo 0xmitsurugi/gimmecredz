@@ -51,6 +51,7 @@ Except for "root access", all files are check. If it's related to /home and if y
  - .docker/config.json
  - mysql mycnf
  - pidgin (libpurple)
+ - hexchat stored password to channels
  - postgresql
  - mysql and rdesktop pass stored in (z|ba)sh history
  - presence of a --password in (z|ba)sh history
@@ -64,6 +65,7 @@ Except for "root access", all files are check. If it's related to /home and if y
 ## Webapps
  - wordpress credz
  - drupal credz
+ - tomcat credz (need testing, finding tomcat home is not exact science)
 
 ## More to come:
 I want to add databases, tomcat passwords, better .bash_history parsing, and any other file of interest which contains passwords and which can be accessed reliably. If you have any idea/improvement, share it.

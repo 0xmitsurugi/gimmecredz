@@ -105,6 +105,9 @@ _grep_file_user() {
 	home=$2
 	file=$3
 	pattern=$4
+	#Just in case:
+	OLDIFS=$IFS
+	IFS=$' \t\n'
 	#_dump_name "$name credz [$home]"
 	if [ -r ${home}/${file} ]; then
 		grep -q $pattern ${home}/${file}
@@ -120,6 +123,7 @@ _grep_file_user() {
 		[ $VERBOSE -eq 1 ] && _dump_name "$name credz [$home]"
 		_print_lose "${home}/${file}" "no access to file"
 	fi
+	IFS=$OLDIFS
 }
 
 _dump_shadow() {
@@ -292,6 +296,35 @@ _dump_drupal() {
 
 }
 
+_dump_tomcat() {
+	#This is not easy because $CATALINA_HOME (or equivalent) could point
+	#anywhere... and folders name conf/ are prone to false positive...
+	# Sooo... at first try to imagine where your tomcat could be.
+	#then grep file for passwords \o/
+	tomcatpath="/"
+	for dir in /var/www /var/www/html /srv/www /opt /usr/local /srv
+	do
+		[ -d $dir ] && tomcatpath=$tomcatpath" $dir"
+	done
+	#now try to go one step lower
+	for DIRS in $tomcatpath
+	do
+		OLDIFS=$IFS
+		IFS=$'\n'
+		tomcathome=$(find $DIRS -maxdepth 1 -type d)
+		for tomcat in $tomcathome
+		do
+			if [ -r $tomcat/conf/server.xml ]; then
+				_grep_file_user "ConnectionDB in tomcat" "$tomcat/conf" "server.xml" "-B 1 connectionURL"
+			fi
+			if [ -r $tomcat/conf/tomcat-users.xml ]; then
+				_grep_file_user "tomcat users" "$tomcat/conf" "tomcat-users.xml" "password"
+			fi
+		done
+		IFS=$OLDIFS
+	done
+}
+
 ##########################################################
 # internal functions
 RESTORE=$(echo -en '\033[0m')
@@ -412,6 +445,7 @@ _paragraph "FILES!"
 _grep_file ".docker/config.json" ".docker/config.json" "-B1 auth\":"
 _grep_file "mysql_my_cnf" ".my.cnf" "-B1 password"
 _grep_file "pidgin (libpurple)" ".purple/accounts.xml" "-B1 password"
+_grep_file "hexchat passwords for servers" ".config/hexchat/servlist.conf" "-E -B1 C="
 _grep_file "postgreSQL" ".pgpass" ":"
 _grep_file "mysql pass in CLI history" ".bash_history" "-E mysql.*-p"
 _grep_file "rdesktop pass in CLI history" ".bash_history" "-E rdesktop.*-p "
@@ -436,6 +470,7 @@ _loop_users _dump_chrome_user
 _paragraph "WEB APPS!"
 _dump_wordpress
 _dump_drupal
+_dump_tomcat
 #Add Directory Alias apache config?
 #if we found locatedb, should we use it?
 #.yml files (symphony) => credz config.yml or parameters.yml
