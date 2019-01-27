@@ -336,6 +336,7 @@ _dump_jenkins() {
 				_print_win "$jenkinshome/secrets/master.key" "Jenkins master key"
 				_print_win "$jenkinshome/secrets/hudson.util.Secret" "Hudson secret"
 				_print_win "$jenkinshome/credentials.xml" "$possible_secrets"
+				_print_win " " "Check https://github.com/gquere/pwn_jenkins/blob/master/offline_decryption/jenkins_offline_decrypt.py in order to decrypt secrets"
 			fi
 		fi
 	done
