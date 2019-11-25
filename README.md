@@ -65,6 +65,7 @@ Except for "root access", all files are check. If it's related to /home and if y
 ## Webapps
  - wordpress credz
  - drupal credz
+ - Joomla! credz
  - tomcat credz (need testing, finding tomcat home is not exact science)
 
 ## More to come:
